@@ -41,7 +41,9 @@ import org.eclipse.egit.core.RepositoryUtil;
 import org.eclipse.egit.core.project.RepositoryMapping;
 import org.eclipse.egit.ui.internal.ConfigurationChecker;
 import org.eclipse.egit.ui.internal.UIText;
+import org.eclipse.egit.ui.internal.commit.CommitUI;
 import org.eclipse.egit.ui.internal.credentials.EGitCredentialsProvider;
+import org.eclipse.egit.ui.internal.pull.PullOperationUI;
 import org.eclipse.egit.ui.internal.trace.GitTraceLocation;
 import org.eclipse.egit.ui.internal.variables.GitTemplateVariableResolver;
 import org.eclipse.jdt.internal.ui.JavaPlugin;
@@ -62,9 +64,12 @@ import org.eclipse.osgi.service.debug.DebugOptionsListener;
 import org.eclipse.swt.graphics.Font;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.ui.IWindowListener;
+import org.eclipse.ui.IWorkbench;
+import org.eclipse.ui.IWorkbenchListener;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.plugin.AbstractUIPlugin;
+import org.eclipse.ui.progress.UIJob;
 import org.eclipse.ui.statushandlers.StatusManager;
 import org.eclipse.ui.themes.ITheme;
 import org.osgi.framework.BundleContext;
@@ -237,6 +242,89 @@ public class Activator extends AbstractUIPlugin implements DebugOptionsListener 
 		ConfigurationChecker.checkConfiguration();
 
 		registerTemplateVariableResolvers();
+
+		UIJob uiJob = new UIJob("select projects") { //$NON-NLS-1$
+			@Override
+			public IStatus runInUIThread(IProgressMonitor monitor) {
+				/*
+				 * IWorkbenchPage page = PlatformUI.getWorkbench()
+				 * .getActiveWorkbenchWindow().getActivePage(); IViewPart view;
+				 */
+				try {
+					/*
+					 * view =
+					 * page.showView("org.eclipse.jdt.ui.PackageExplorer");
+					 * //$NON-NLS-1$ ISelectionProvider selProvider =
+					 * view.getSite() .getSelectionProvider();
+					 *
+					 * List<Object> openProjects = new ArrayList<Object>();
+					 *
+					 * for (IProject project : ResourcesPlugin.getWorkspace()
+					 * .getRoot().getProjects()) { if (project.isOpen()) { final
+					 * IJavaProject javaProject = JavaCore .create(project);
+					 *
+					 * if (javaProject != null) { openProjects.add(javaProject);
+					 * }
+					 *
+					 * openProjects.add(project); } }
+					 *
+					 * selProvider.setSelection( new
+					 * StructuredSelection(openProjects));
+					 */
+
+					Set<Repository> repos = new LinkedHashSet<Repository>();
+					for (IProject project : ResourcesPlugin.getWorkspace()
+							.getRoot().getProjects()) {
+						RepositoryMapping repositoryMapping = RepositoryMapping
+								.getMapping(project);
+						if (repositoryMapping != null)
+							repos.add(repositoryMapping.getRepository());
+					}
+
+					new PullOperationUI(repos).start();
+
+				} catch (Exception ex) {
+					int a = 0;
+					a = a + 1;
+				}
+
+				return Status.OK_STATUS;
+			}
+		};
+		uiJob.setSystem(true);
+		uiJob.schedule();
+
+		IWorkbench iwb = PlatformUI.getWorkbench();
+		WBListener wbl = new WBListener();
+		iwb.addWorkbenchListener(wbl);
+
+	}
+
+	private class WBListener implements IWorkbenchListener {
+
+		@Override
+		public void postShutdown(IWorkbench w) {
+		}
+
+		@Override
+		public boolean preShutdown(IWorkbench w, boolean b) {
+			for (IProject project : ResourcesPlugin.getWorkspace().getRoot()
+					.getProjects()) {
+				RepositoryMapping repositoryMapping = RepositoryMapping
+						.getMapping(project);
+				if (repositoryMapping != null) {
+					CommitUI commitUi = new CommitUI(
+							PlatformUI.getWorkbench().getActiveWorkbenchWindow()
+									.getShell(),
+							repositoryMapping.getRepository(), new IResource[0],
+							true, false);
+
+					commitUi.commit();
+				}
+			}
+
+			return true;
+		}
 	}
 
 	private void setupCredentialsProvider() {

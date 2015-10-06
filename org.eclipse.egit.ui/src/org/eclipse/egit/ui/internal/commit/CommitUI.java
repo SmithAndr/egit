@@ -80,8 +80,11 @@ public class CommitUI  {
 
 	private boolean preselectAll;
 
+	private boolean userAction;
+
 	/**
 	 * Constructs a CommitUI object
+	 *
 	 * @param shell
 	 *            Shell to use for UI interaction. Must not be null.
 	 * @param repo
@@ -92,11 +95,13 @@ public class CommitUI  {
 	 *            if selectedResources contains a resource that is parent of the
 	 *            file. selectedResources must not be null.
 	 * @param preselectAll
-	 * 			  preselect all changed files in the commit dialog.
-	 * 			  If set to true selectedResources are ignored.
+	 *            preselect all changed files in the commit dialog. If set to
+	 *            true selectedResources are ignored.
+	 * @param userAction
+	 *            Warns if nothing has changed.
 	 */
 	public CommitUI(Shell shell, Repository repo,
-			IResource[] selectedResources, boolean preselectAll) {
+			IResource[] selectedResources, boolean preselectAll, boolean userAction) {
 		this.shell = shell;
 		this.repo = repo;
 		this.selectedResources = new IResource[selectedResources.length];
@@ -104,6 +109,7 @@ public class CommitUI  {
 		System.arraycopy(selectedResources, 0, this.selectedResources, 0,
 				selectedResources.length);
 		this.preselectAll = preselectAll;
+		this.userAction = userAction;
 	}
 
 	/**1
@@ -150,7 +156,7 @@ public class CommitUI  {
 					commitHelper.getCannotCommitMessage());
 			return false;
 		}
-		boolean amendAllowed = commitHelper.amendAllowed();
+		boolean amendAllowed = false; // commitHelper.amendAllowed();
 		if (files.isEmpty()) {
 			if (amendAllowed && commitHelper.getPreviousCommit() != null) {
 				boolean result = MessageDialog.openQuestion(shell,
@@ -160,9 +166,11 @@ public class CommitUI  {
 					return false;
 				amending = true;
 			} else {
-				MessageDialog.openWarning(shell,
-						UIText.CommitAction_noFilesToCommit,
-						UIText.CommitAction_amendNotPossible);
+				if (userAction) {
+					MessageDialog.openWarning(shell,
+							UIText.CommitAction_noFilesToCommit,
+							UIText.CommitAction_amendNotPossible);
+				}
 				return false;
 			}
 		}
@@ -197,9 +205,16 @@ public class CommitUI  {
 		commitOperation.setCommitAll(commitHelper.isMergedResolved);
 		if (commitHelper.isMergedResolved)
 			commitOperation.setRepository(repo);
-		Job commitJob = new CommitJob(repo, commitOperation).
-				setPushUpstream(commitDialog.isPushRequested());
+		Job commitJob = new CommitJob(repo, commitOperation, !userAction)
+				.setPushUpstream(commitDialog.isPushRequested());
 		commitJob.schedule();
+
+		if (!userAction)
+			try {
+				commitJob.join();
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
 
 		return true;
 	}
