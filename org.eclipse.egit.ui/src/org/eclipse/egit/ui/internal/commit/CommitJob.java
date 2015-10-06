@@ -68,18 +68,23 @@ public class CommitJob extends Job {
 		GERRIT;
 	}
 
+	private boolean waitForPush;
+
 	/**
 	 * @param repository
 	 *            the repository to commit to
 	 * @param commitOperation
 	 *            the commit operation to use
+	 * @param waitForPush
+	 *            Whether or not to wait for the push to complete.
 	 *
 	 */
 	public CommitJob(final Repository repository,
-			final CommitOperation commitOperation) {
+			final CommitOperation commitOperation, boolean waitForPush) {
 		super(UIText.CommitAction_CommittingChanges);
 		this.repository = repository;
 		this.commitOperation = commitOperation;
+		this.waitForPush = waitForPush;
 	}
 
 	/**
@@ -133,6 +138,13 @@ public class CommitJob extends Job {
 			}
 			if (pushMode != null) {
 				pushUpstream(commit, pushMode);
+				if (op != null && this.waitForPush) {
+					try {
+						op.execute(monitor);
+					} catch (Exception e) {
+						e.printStackTrace();
+					}
+				}
 			}
 		}
 		return Status.OK_STATUS;
@@ -162,7 +174,7 @@ public class CommitJob extends Job {
 		});
 	}
 
-	private void pushUpstream(final RevCommit commit, final PushMode pushTo) {
+	private PushOperationUI pushUpstream(final RevCommit commit, final PushMode pushTo) {
 		final RemoteConfig config = SimpleConfigurePushDialog
 				.getConfiguredRemote(repository);
 
@@ -181,10 +193,14 @@ public class CommitJob extends Job {
 					}
 				}
 			});
+
+			return null;
 		} else {
 			PushOperationUI op = new PushOperationUI(repository,
 					config.getName(), false);
-			op.start();
+			if (!waitForPush)
+				op.start();
+			return op;
 		}
 	}
 

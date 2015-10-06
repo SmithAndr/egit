@@ -3244,7 +3244,8 @@ public class StagingView extends ViewPart implements IShowInSource {
 		if (pushUpstream) {
 			pushMode = gerritMode ? PushMode.GERRIT : PushMode.UPSTREAM;
 		}
-		final Job commitJob = new CommitJob(currentRepository, commitOperation)
+		final Job commitJob = new CommitJob(currentRepository, commitOperation,
+				false)
 				.setOpenCommitEditor(openNewCommitsAction.isChecked())
 				.setPushUpstream(pushMode);
 

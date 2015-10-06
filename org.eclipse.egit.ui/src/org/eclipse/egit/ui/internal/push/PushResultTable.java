@@ -264,6 +264,17 @@ class PushResultTable {
 		PushOperationResult pushOperationResult = element
 				.getPushOperationResult();
 		final URIish uri = element.getUri();
+		Status status = element.getRemoteRefUpdate().getStatus();
+		if (status == Status.REJECTED_NONFASTFORWARD
+				|| status == Status.REJECTED_REMOTE_CHANGED
+				|| status == Status.REJECTED_OTHER_REASON) {
+			result.append(
+					"****************************************************\r\n"); //$NON-NLS-1$
+			result.append(
+					"    FAILED TO PUSH CHANGES TO REMOTE REPOSITORY :(\r\n"); //$NON-NLS-1$
+			result.append(
+					"****************************************************\r\n"); //$NON-NLS-1$
+		}
 		result.append(UIText.PushResultTable_repository);
 		result.append(SPACE);
 		result.append(uri.toString());

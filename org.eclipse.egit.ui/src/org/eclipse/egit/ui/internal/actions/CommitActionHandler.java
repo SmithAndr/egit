@@ -80,7 +80,7 @@ public class CommitActionHandler extends RepositoryActionHandler {
 				return null;
 			}
 			CommitUI commitUi = new CommitUI(shell, repository,
-					resourcesInScope, false);
+				resourcesInScope, true, true);
 			commitUi.commit();
 		}
 		return null;

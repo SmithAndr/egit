@@ -18,6 +18,8 @@ import org.eclipse.jface.dialogs.IDialogConstants;
 import org.eclipse.jface.dialogs.IDialogSettings;
 import org.eclipse.jface.dialogs.TitleAreaDialog;
 import org.eclipse.jgit.lib.Repository;
+import org.eclipse.jgit.transport.PushResult;
+import org.eclipse.jgit.transport.RemoteRefUpdate;
 import org.eclipse.jgit.transport.URIish;
 import org.eclipse.osgi.util.NLS;
 import org.eclipse.swt.SWT;
@@ -114,8 +116,31 @@ class PushResultDialog extends TitleAreaDialog {
 		final Composite composite = (Composite) super.createDialogArea(parent);
 		String pushErrors = getPushErrors();
 		String title;
+		String pushErrorOverride = null;
+		if (result != null) {
+			for (URIish uri : result.getURIs()) {
+				PushResult pushResult = result.getPushResult(uri);
+				if (pushResult != null) {
+					for (RemoteRefUpdate update : pushResult
+							.getRemoteUpdates()) {
+						RemoteRefUpdate.Status status = update.getStatus();
+						if (status == RemoteRefUpdate.Status.REJECTED_NONFASTFORWARD
+								|| status == RemoteRefUpdate.Status.REJECTED_REMOTE_CHANGED
+								|| status == RemoteRefUpdate.Status.REJECTED_OTHER_REASON) {
+							pushErrorOverride = "FAILED TO PUSH CHANGES TO REMOTE REPOSITORY."; //$NON-NLS-1$
+						}
+
+					}
+				}
+			}
+		}
+
 		if (pushErrors != null && pushErrors.length() > 0) {
 			setErrorMessage(pushErrors);
+			title = NLS.bind(UIText.PushResultDialog_label_failed,
+					destinationString);
+		} else if (pushErrorOverride != null) {
+			setErrorMessage(pushErrorOverride);
 			title = NLS.bind(UIText.PushResultDialog_label_failed,
 					destinationString);
 		} else
