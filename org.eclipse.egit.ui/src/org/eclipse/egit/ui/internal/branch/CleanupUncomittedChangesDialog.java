@@ -81,7 +81,7 @@ public class CleanupUncomittedChangesDialog extends MessageDialog {
 		switch (buttonId) {
 		case IDialogConstants.PROCEED_ID:
 			CommitUI commitUI = new CommitUI(getShell(), repository,
-					new IResource[0], true);
+					new IResource[0], true, true);
 			shouldContinue = commitUI.commit();
 			break;
 		case IDialogConstants.ABORT_ID:

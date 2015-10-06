@@ -2695,7 +2695,8 @@ public class StagingView extends ViewPart implements IShowInSource {
 		if (amendPreviousCommitAction.isChecked())
 			commitOperation.setAmending(true);
 		commitOperation.setComputeChangeId(addChangeIdAction.isChecked());
-		final Job commitJob = new CommitJob(currentRepository, commitOperation)
+		final Job commitJob = new CommitJob(currentRepository, commitOperation,
+				false)
 			.setOpenCommitEditor(openNewCommitsAction.isChecked())
 			.setPushUpstream(pushUpstream);
 

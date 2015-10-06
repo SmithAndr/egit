@@ -51,7 +51,7 @@ public class CommitActionHandler extends RepositoryActionHandler {
 			return null;
 		}
 		CommitUI commitUi = new CommitUI(shell, repo, resourcesInScope,
-				false);
+				true, true);
 		commitUi.commit();
 		return null;
 	}
