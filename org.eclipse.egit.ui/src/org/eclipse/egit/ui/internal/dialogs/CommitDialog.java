@@ -1141,7 +1141,7 @@ public class CommitDialog extends TitleAreaDialog {
 		setMessage(message, type);
 		boolean commitEnabled = type == IMessageProvider.WARNING
 				|| type == IMessageProvider.NONE;
-		commitButton.setEnabled(commitEnabled);
+		commitButton.setEnabled(false);
 		commitAndPushButton.setEnabled(commitEnabled);
 	}
 
