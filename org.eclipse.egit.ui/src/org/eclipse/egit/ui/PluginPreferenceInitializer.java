@@ -141,6 +141,8 @@ public class PluginPreferenceInitializer extends AbstractPreferenceInitializer {
 		store.setDefault(UIPreferences.USE_LOGICAL_MODEL, true);
 
 		store.setDefault(UIPreferences.REBASE_INTERACTIVE_SYNC_SELECTION, true);
+		
+		store.setDefault(UIPreferences.COMMIT_DIALOG_INCLUDE_UNTRACKED, true);
 	}
 
 }
