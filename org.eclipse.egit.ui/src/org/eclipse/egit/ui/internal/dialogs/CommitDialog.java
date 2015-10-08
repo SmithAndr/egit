@@ -959,7 +959,7 @@ public class CommitDialog extends TitleAreaDialog {
 
 	private void updateCommitButtons(boolean enable) {
 		commitAndPushButton.setEnabled(enable);
-		commitButton.setEnabled(enable);
+		commitButton.setEnabled(false);
 	}
 
 	private Composite createMessageAndPersonArea(Composite container) {
