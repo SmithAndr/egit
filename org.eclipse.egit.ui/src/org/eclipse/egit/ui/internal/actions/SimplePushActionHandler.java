@@ -35,7 +35,8 @@ public class SimplePushActionHandler extends RepositoryActionHandler {
 			return null;
 		}
 
-		PushOperationUI op = new PushOperationUI(repository, config.getName(), false);
+		PushOperationUI op = new PushOperationUI(repository, config.getName(),
+				false, null);
 		op.start();
 		return null;
 	}

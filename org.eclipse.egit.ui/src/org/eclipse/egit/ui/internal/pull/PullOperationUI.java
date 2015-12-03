@@ -21,6 +21,7 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.WorkspaceJob;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
@@ -37,11 +38,13 @@ import org.eclipse.egit.ui.JobFamilies;
 import org.eclipse.egit.ui.UIPreferences;
 import org.eclipse.egit.ui.internal.UIText;
 import org.eclipse.egit.ui.internal.branch.CleanupUncomittedChangesDialog;
+import org.eclipse.egit.ui.internal.commit.CommitUI;
 import org.eclipse.egit.ui.internal.credentials.EGitCredentialsProvider;
 import org.eclipse.jface.dialogs.ErrorDialog;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jgit.api.PullResult;
 import org.eclipse.jgit.api.RebaseResult;
+import org.eclipse.jgit.api.errors.CheckoutConflictException;
 import org.eclipse.jgit.errors.TransportException;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.osgi.util.NLS;
@@ -229,7 +232,7 @@ public class PullOperationUI extends JobChangeAdapter {
 	}
 
 	private void showResults() {
-		PlatformUI.getWorkbench().getDisplay().asyncExec(new Runnable() {
+		PlatformUI.getWorkbench().getDisplay().syncExec(new Runnable() {
 			@Override
 			public void run() {
 				Shell shell = PlatformUI.getWorkbench()
@@ -246,10 +249,13 @@ public class PullOperationUI extends JobChangeAdapter {
 		else if (this.results.size() == 1) {
 			Entry<Repository, Object> entry = this.results.entrySet()
 					.iterator().next();
-			if (entry.getValue() instanceof PullResult)
-				new PullResultDialog(shell, entry.getKey(), (PullResult) entry
-						.getValue()).open();
-			else {
+			if (entry.getValue() instanceof PullResult) {
+				PullResultDialog dialog = new PullResultDialog(shell,
+						entry.getKey(), (PullResult) entry.getValue());
+
+				dialog.setBlockOnOpen(true);
+				dialog.open();
+			} else {
 				IStatus status = (IStatus) entry.getValue();
 				if (status == NOT_TRIED_STATUS) {
 					MessageDialog
@@ -262,11 +268,43 @@ public class PullOperationUI extends JobChangeAdapter {
 							UIText.PullOperationUI_PullFailed,
 							UIText.PullOperationUI_ConnectionProblem,
 							status);
-				} else
+				} else if (status
+						.getException() instanceof CheckoutConflictException) {
+					ErrorDialog dialog = new ErrorDialog(shell,
+							UIText.PullOperationUI_PullFailed,
+							status.getMessage(), status,
+							IStatus.OK | IStatus.INFO | IStatus.WARNING
+									| IStatus.ERROR);
+
+					dialog.setBlockOnOpen(true);
+					dialog.open();
+
+				} else {
 					Activator.handleError(status.getMessage(), status
 							.getException(), true);
+				}
 			}
-		} else
-			new MultiPullResultDialog(shell, results).open();
+		} else {
+			MultiPullResultDialog dialog = new MultiPullResultDialog(shell,
+					results);
+			dialog.setBlockOnOpen(true);
+			dialog.open();
+		}
+
+		for (Entry<Repository, Object> entry : results.entrySet()) {
+			Object result = entry.getValue();
+			if (result instanceof Status) {
+				Status status = (Status) result;
+				if (status.getException() != null && status
+						.getException() instanceof CheckoutConflictException) {
+					CommitUI commitUi = new CommitUI(
+							PlatformUI.getWorkbench().getActiveWorkbenchWindow()
+									.getShell(),
+							entry.getKey(), new IResource[0], true, false);
+
+					commitUi.commit();
+				}
+			}
+		}
 	}
 }

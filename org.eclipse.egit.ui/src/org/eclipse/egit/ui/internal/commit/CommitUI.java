@@ -47,6 +47,8 @@ import org.eclipse.egit.ui.internal.dialogs.CommitDialog;
 import org.eclipse.jface.dialogs.IDialogConstants;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.operation.IRunnableWithProgress;
+import org.eclipse.jgit.api.AddCommand;
+import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.IndexDiff;
 import org.eclipse.jgit.lib.Repository;
@@ -124,26 +126,22 @@ public class CommitUI  {
 
 		BasicConfigurationDialog.show(new Repository[]{repo});
 
-		resetState();
-		final IProject[] projects = getProjectsOfRepositories();
-		try {
-			PlatformUI.getWorkbench().getProgressService().busyCursorWhile(new IRunnableWithProgress() {
-
-				@Override
-				public void run(IProgressMonitor monitor) throws InvocationTargetException,
-						InterruptedException {
-					try {
-						buildIndexHeadDiffList(projects, monitor);
-					} catch (IOException e) {
-						throw new InvocationTargetException(e);
-					}
-				}
-			});
-		} catch (InvocationTargetException e) {
-			Activator.handleError(UIText.CommitAction_errorComputingDiffs, e.getCause(),
-					true);
+		if (!buildIndexDiff())
 			return false;
-		} catch (InterruptedException e) {
+
+		try {
+			if (!indexDiff.getConflicting().isEmpty()) {
+				AddCommand addCommand = new Git(repo).add();
+				for (String conflictingFile : indexDiff.getConflicting()) {
+					addCommand.addFilepattern(conflictingFile);
+				}
+				addCommand.call();
+
+				if (!buildIndexDiff())
+					return false;
+			}
+		} catch (Exception ex) {
+			ex.printStackTrace();
 			return false;
 		}
 
@@ -217,6 +215,33 @@ public class CommitUI  {
 			}
 
 		return true;
+	}
+
+	private boolean buildIndexDiff() {
+		resetState();
+		final IProject[] projects = getProjectsOfRepositories();
+		try {
+			PlatformUI.getWorkbench().getProgressService().busyCursorWhile(new IRunnableWithProgress() {
+
+				@Override
+				public void run(IProgressMonitor monitor) throws InvocationTargetException,
+						InterruptedException {
+					try {
+						buildIndexHeadDiffList(projects, monitor);
+					} catch (IOException e) {
+						throw new InvocationTargetException(e);
+					}
+				}
+			});
+
+			return true;
+		} catch (InvocationTargetException e) {
+			Activator.handleError(UIText.CommitAction_errorComputingDiffs, e.getCause(),
+					true);
+			return false;
+		} catch (InterruptedException e) {
+			return false;
+		}
 	}
 
 	private IProject[] getProjectsOfRepositories() {

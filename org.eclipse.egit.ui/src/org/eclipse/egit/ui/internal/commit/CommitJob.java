@@ -99,6 +99,16 @@ public class CommitJob extends Job {
 	@Override
 	protected IStatus run(IProgressMonitor monitor) {
 		RevCommit commit = null;
+		Ref ref = null;
+		try {
+			ref = repository.getRef(repository.getBranch());
+		} catch (IOException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
+
+		String refName = ref != null ? ref.getObjectId().getName() : null;
+
 		try {
 			commitOperation.execute(monitor);
 			commit = commitOperation.getCommit();
@@ -126,9 +136,8 @@ public class CommitJob extends Job {
 		if (commit != null) {
 			if (openCommitEditor)
 				openCommitEditor(commit);
-			if (pushUpstream)
- {
-				PushOperationUI op = pushUpstream(commit);
+			if (pushUpstream) {
+				PushOperationUI op = pushUpstream(commit, refName);
 				if (op != null && this.waitForPush)
 					try {
 						op.execute(monitor);
@@ -164,7 +173,7 @@ public class CommitJob extends Job {
 		});
 	}
 
-	PushOperationUI pushUpstream(final RevCommit commit) {
+	PushOperationUI pushUpstream(final RevCommit commit, final String refName) {
 		RemoteConfig config = SimpleConfigurePushDialog
 				.getConfiguredRemote(repository);
 		if (config == null) {
@@ -199,7 +208,7 @@ public class CommitJob extends Job {
 			return null;
 		} else {
 			PushOperationUI op = new PushOperationUI(repository,
-					config.getName(), false);
+					config.getName(), false, refName);
 			if (!waitForPush)
 				op.start();
 			return op;

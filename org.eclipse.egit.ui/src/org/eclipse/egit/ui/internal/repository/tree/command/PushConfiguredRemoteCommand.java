@@ -43,7 +43,7 @@ public class PushConfiguredRemoteCommand extends
 					UIText.SimplePushActionHandler_NothingToPushDialogMessage);
 			return null;
 		}
-		new PushOperationUI(node.getRepository(), config.getName(), false)
+		new PushOperationUI(node.getRepository(), config.getName(), false, null)
 				.start();
 		return null;
 	}
