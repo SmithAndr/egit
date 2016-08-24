@@ -137,7 +137,7 @@ public class CommitJob extends Job {
 				openCommitEditor(commit);
 			}
 			if (pushMode != null) {
-				pushUpstream(commit, pushMode);
+				PushOperationUI op = pushUpstream(commit, pushMode);
 				if (op != null && this.waitForPush) {
 					try {
 						op.execute(monitor);

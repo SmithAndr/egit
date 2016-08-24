@@ -347,7 +347,7 @@ public class Activator extends AbstractUIPlugin implements DebugOptionsListener 
 					 * StructuredSelection(openProjects));
 					 */
 
-					Set<Repository> repos = new LinkedHashSet<Repository>();
+					Set<Repository> repos = new LinkedHashSet<>();
 					for (IProject project : ResourcesPlugin.getWorkspace()
 							.getRoot().getProjects()) {
 						RepositoryMapping repositoryMapping = RepositoryMapping
