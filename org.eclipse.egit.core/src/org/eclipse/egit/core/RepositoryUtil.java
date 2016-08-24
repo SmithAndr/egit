@@ -120,7 +120,7 @@ public class RepositoryUtil {
 
 	@NonNull
 	static String getDefaultDefaultRepositoryDir() {
-		return new File(FS.DETECTED.userHome(), "git").getPath(); //$NON-NLS-1$
+		return "${workspace_loc}\\git"; //$NON-NLS-1$
 	}
 
 	/**
