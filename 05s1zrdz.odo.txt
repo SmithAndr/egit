@@ -1,0 +1,16 @@
+﻿[user]
+	name = Andrew Smith
+	email = smithandr@hotmail.com
+[user]
+[gui]
+	recentrepo = C:/Users/arsmith/git/egit41
+	recentrepo = C:/Users/arsmith/git/jgit41
+[filter "lfs"]
+	clean = git-lfs clean -- %f
+	smudge = git-lfs smudge -- %f
+	required = true
+[merge]
+	tool = meld
+[mergetool "meld"]
+	path = C:\\Program Files (x86)\\Meld\\Meld.exe
+

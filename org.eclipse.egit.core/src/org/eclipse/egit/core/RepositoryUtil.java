@@ -140,7 +140,7 @@ public class RepositoryUtil {
 
 	@NonNull
 	static String getDefaultDefaultRepositoryDir() {
-		return "${workspace_loc}\\git"; //$NON-NLS-1$
+		return "${workspace_loc}\\git-" + System.currentTimeMillis(); //$NON-NLS-1$
 	}
 
 	/**
