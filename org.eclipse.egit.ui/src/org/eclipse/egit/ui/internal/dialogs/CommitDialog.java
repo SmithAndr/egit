@@ -570,8 +570,9 @@ public class CommitDialog extends TitleAreaDialog {
 				UIText.CommitDialog_CommitAndPush, false);
 		commitButton = createButton(parent, IDialogConstants.OK_ID,
 				UIText.CommitDialog_Commit, true);
-		createButton(parent, IDialogConstants.CANCEL_ID,
+		Button cancelButton = createButton(parent, IDialogConstants.CANCEL_ID,
 				IDialogConstants.CANCEL_LABEL, false);
+		cancelButton.setEnabled(false);
 		updateMessage();
 	}
 
