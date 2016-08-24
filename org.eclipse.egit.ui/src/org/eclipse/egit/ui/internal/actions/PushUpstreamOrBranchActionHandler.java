@@ -48,7 +48,7 @@ public class PushUpstreamOrBranchActionHandler extends RepositoryActionHandler {
 			RemoteConfig config, Shell shell) {
 		if (config != null) {
 			PushOperationUI op = new PushOperationUI(repository,
-					config.getName(), false);
+					config.getName(), false, null);
 			op.start();
 		} else {
 			Ref head = getHeadIfSymbolic(repository);

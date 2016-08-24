@@ -249,6 +249,34 @@ public class PushOperationResult {
 		return true;
 	}
 
+	/**
+	 * @param conflictIsSuccess
+	 * @return Whether or not changes were successfully pushed.
+	 */
+	public boolean successfullyPushedChanges(boolean conflictIsSuccess) {
+		for (URIish uri : getURIs()) {
+			PushResult pushResult = getPushResult(uri);
+			if (pushResult != null) {
+				if (!conflictIsSuccess) {
+					for (RemoteRefUpdate update : pushResult
+							.getRemoteUpdates()) {
+						RemoteRefUpdate.Status status = update.getStatus();
+						if (status == RemoteRefUpdate.Status.REJECTED_NONFASTFORWARD
+								|| status == RemoteRefUpdate.Status.REJECTED_REMOTE_CHANGED
+								|| status == RemoteRefUpdate.Status.REJECTED_OTHER_REASON) {
+							return false;
+						}
+
+					}
+				}
+			} else {
+				return false;
+			}
+		}
+
+		return true;
+	}
+
 	@Override
 	public int hashCode() {
 		return urisEntries.hashCode();

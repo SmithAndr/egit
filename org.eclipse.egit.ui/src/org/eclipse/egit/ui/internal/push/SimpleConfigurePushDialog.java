@@ -641,8 +641,8 @@ public class SimpleConfigurePushDialog extends TitleAreaDialog {
 										throws InvocationTargetException,
 										InterruptedException {
 									PushOperationUI op = new PushOperationUI(
-											repository, config.getName(),
-											false);
+											repository, config.getName(), false,
+											null);
 									op.start();
 								}
 							});

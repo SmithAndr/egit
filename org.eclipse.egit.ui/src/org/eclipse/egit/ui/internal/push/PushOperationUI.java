@@ -14,7 +14,9 @@ import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
@@ -23,14 +25,17 @@ import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.jobs.IJobChangeEvent;
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.core.runtime.jobs.JobChangeAdapter;
+import org.eclipse.egit.core.op.PullOperation;
 import org.eclipse.egit.core.op.PushOperation;
 import org.eclipse.egit.core.op.PushOperationResult;
 import org.eclipse.egit.core.op.PushOperationSpecification;
+import org.eclipse.egit.core.op.ResetOperation;
 import org.eclipse.egit.ui.Activator;
 import org.eclipse.egit.ui.JobFamilies;
 import org.eclipse.egit.ui.UIPreferences;
 import org.eclipse.egit.ui.internal.UIText;
 import org.eclipse.egit.ui.internal.credentials.EGitCredentialsProvider;
+import org.eclipse.jgit.api.ResetCommand.ResetType;
 import org.eclipse.jgit.errors.NotSupportedException;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.transport.CredentialsProvider;
@@ -63,21 +68,25 @@ public class PushOperationUI {
 
 	private PushOperationResult expectedResult;
 
+	private String originalRefName;
+
 	private boolean showConfigureButton = true;
 
 	/**
 	 * @param repository
 	 * @param remoteName
 	 * @param dryRun
+	 * @param originalRefName
 	 *
 	 */
 	public PushOperationUI(Repository repository, String remoteName,
-			boolean dryRun) {
+			boolean dryRun, String originalRefName) {
 		this.repository = repository;
 		this.spec = null;
 		this.config = null;
 		this.remoteName = remoteName;
 		this.dryRun = dryRun;
+		this.originalRefName = originalRefName;
 		destinationString = NLS.bind("{0} - {1}", repository.getDirectory() //$NON-NLS-1$
 				.getParentFile().getName(), remoteName);
 	}
@@ -165,7 +174,33 @@ public class PushOperationUI {
 			op.setCredentialsProvider(new EGitCredentialsProvider());
 		try {
 			op.run(monitor);
-			return op.getOperationResult();
+
+			PushOperationResult result = op.getOperationResult();
+
+			if (!result.successfullyPushedChanges(true)
+					&& originalRefName != null) {
+
+				ResetOperation resetOp = new ResetOperation(repository,
+						originalRefName, ResetType.SOFT);
+
+				try {
+					resetOp.execute(null);
+				} catch (Exception e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			} else if (!result.successfullyPushedChanges(false)) {
+				int timeout = Activator.getDefault().getPreferenceStore()
+						.getInt(UIPreferences.REMOTE_CONNECTION_TIMEOUT);
+				Set<Repository> repos = new LinkedHashSet<Repository>();
+				repos.add(repository);
+				PullOperation pullOp = new PullOperation(repos, timeout);
+				pullOp.setCredentialsProvider(new EGitCredentialsProvider());
+				pullOp.execute(null);
+			}
+
+			return result;
+
 		} catch (InvocationTargetException e) {
 			throw new CoreException(Activator.createErrorStatus(e.getCause()
 					.getMessage(), e.getCause()));

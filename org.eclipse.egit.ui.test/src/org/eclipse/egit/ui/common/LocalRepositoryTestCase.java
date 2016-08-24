@@ -415,7 +415,8 @@ public abstract class LocalRepositoryTestCase extends EGitTestCase {
 
 		myRepository.getConfig().save();
 		// and push
-		PushOperationUI pa = new PushOperationUI(myRepository, "push", false);
+		PushOperationUI pa = new PushOperationUI(myRepository, "push", false,
+				null);
 		pa.execute(null);
 
 		try {

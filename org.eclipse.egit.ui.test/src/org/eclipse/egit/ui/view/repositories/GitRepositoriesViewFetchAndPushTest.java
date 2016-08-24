@@ -220,7 +220,8 @@ public class GitRepositoriesViewFetchAndPushTest extends
 		objid = objid.substring(0, 7);
 		touchAndSubmit(null);
 		// push from other repository
-		PushOperationUI op =new PushOperationUI(repository, "origin", false);
+		PushOperationUI op = new PushOperationUI(repository, "origin", false,
+				null);
 		op.start();
 
 		String pushdialogTitle = NLS.bind(UIText.PushResultDialog_title,
